@@ -3,7 +3,10 @@ namespace App.Models;
 public class State
 {
     private readonly Utilities _utilities;
+    
     public List<string> NonTerminals { get; set; }
+
+    public Dictionary<string, bool> EpsilonGenerated = new();
 
     /// <summary>
     /// Number of characters in each item
@@ -39,9 +42,33 @@ public class State
 
     public void Initialize(Options options)
     {
-        NonTerminals = Enumerable.Range(0, options.NonTerminals)
-            .Select(_ => _utilities.RandomUpperCaseString(this.ItemLength))
-            .ToList();
+        var generatedNonTerminals = new HashSet<string>();
+        
+        // Avoid duplicate non-terminal
+        foreach (var _ in Enumerable.Range(0, options.NonTerminals))
+        {
+            var addedNonTerminal = false;
+            var itemSize = options.ItemLength;
+            
+            do
+            {
+                var nt = _utilities.RandomUpperCaseString(itemSize);
+
+                if (!generatedNonTerminals.Contains(nt))
+                {
+                    generatedNonTerminals.Add(nt);
+                    addedNonTerminal = true;
+                }
+                else
+                {
+                    itemSize++;
+                }
+            } while (!addedNonTerminal);
+        }
+
+        NonTerminals = generatedNonTerminals.ToList();
+
+        EpsilonGenerated = NonTerminals.ToDictionary(x => x, _ => false);
 
         this.ItemLength = options.ItemLength;
     }

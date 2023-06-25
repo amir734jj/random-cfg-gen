@@ -1,9 +1,8 @@
-using App.Interfaces;
 using App.Models;
 
 namespace App.Logic;
 
-public class ItemGenerator : IRandomTask<string>
+public class ItemGenerator
 {
     private readonly RandomGen _randomGen;
     private readonly State _state;
@@ -18,14 +17,11 @@ public class ItemGenerator : IRandomTask<string>
     
     public string Invoke()
     {
-        switch (_randomGen.Rand(_state.itemDistribution))
+        return _randomGen.Rand(_state.itemDistribution) switch
         {
-            case ItemType.Terminal:
-                return $@"""{_utilities.RandomLowerCaseString(_state.ItemLength)}""";
-            case ItemType.NonTerminals:
-                return _utilities.RandomNonTerminal(_state.NonTerminals);
-            default:
-                throw new ArgumentOutOfRangeException();
-        }
+            ItemType.Terminal => $@"""{_utilities.RandomLowerCaseString(_state.ItemLength)}""",
+            ItemType.NonTerminals => _utilities.RandomNonTerminal(_state.NonTerminals),
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }

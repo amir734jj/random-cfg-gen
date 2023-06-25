@@ -25,7 +25,8 @@ class Program
         });
 
         serviceCollection.AddSingleton(new Random());
-        serviceCollection.AddSingleton<State>((x) =>
+        serviceCollection.AddSingleton(result.Value);
+        serviceCollection.AddSingleton<State>(x =>
         {
             var state = new State(x.GetRequiredService<Utilities>());
             state.Initialize(result.Value);

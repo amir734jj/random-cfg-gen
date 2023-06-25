@@ -27,4 +27,9 @@ public class Utilities
     {
         return nonTerminals[_random.Next(nonTerminals.Count)];
     }
+
+    public IDictionary<int, double> WithoutEpsilonRhs(IDictionary<int, double> dist)
+    {
+        return dist.Where(x => x.Key != 0).ToDictionary(x => x.Key, x => x.Value);
+    } 
 }

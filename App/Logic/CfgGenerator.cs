@@ -1,9 +1,8 @@
-using App.Interfaces;
 using App.Models;
 
 namespace App.Logic;
 
-public class CfgGenerator : IRandomTask<string>
+public class CfgGenerator
 {
     private readonly State _state;
     private readonly ProductionGenerator _productionGenerator;
@@ -17,6 +16,6 @@ public class CfgGenerator : IRandomTask<string>
     public string Invoke()
     {
         return string.Join("", _state.NonTerminals
-            .SelectMany(nt => _productionGenerator.Invoke().Select(p => $"{nt} ::= {p} ;\n")));
+            .SelectMany(nt => _productionGenerator.Invoke(nt).Select(p => $"{nt} ::= {p} ;\n")));
     }
 }
