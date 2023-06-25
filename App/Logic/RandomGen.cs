@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace App;
+namespace App.Logic;
 
 public class RandomGen
 {

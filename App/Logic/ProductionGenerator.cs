@@ -1,8 +1,7 @@
 using App.Interfaces;
-using App.Logic;
 using App.Models;
 
-namespace App;
+namespace App.Logic;
 
 public class ProductionGenerator : IRandomTask<List<string>>
 {
