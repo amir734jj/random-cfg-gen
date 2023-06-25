@@ -16,7 +16,7 @@ public class CfgGenerator : IRandomTask<string>
     
     public string Invoke()
     {
-        return string.Join(";\n", _state.NonTerminals
-            .SelectMany(nt => _productionGenerator.Invoke().Select(p => $"{nt} ::= {p}")));
+        return string.Join("", _state.NonTerminals
+            .SelectMany(nt => _productionGenerator.Invoke().Select(p => $"{nt} ::= {p} ;\n")));
     }
 }
