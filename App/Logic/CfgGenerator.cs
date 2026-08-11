@@ -15,7 +15,7 @@ public class CfgGenerator
     
     public string Invoke()
     {
-        return string.Join("", _state.NonTerminals
-            .SelectMany(nt => _productionGenerator.Invoke(nt).Select(p => $"{nt} ::= {p} ;\n")));
+        return string.Join("", _state.NonTerminals.Select(nt =>
+            $"{nt} : {string.Join("\n  | ", _productionGenerator.Invoke(nt))} ;\n"));
     }
 }

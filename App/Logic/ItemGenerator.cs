@@ -19,7 +19,7 @@ public class ItemGenerator
     {
         return _randomGen.Rand(_state.itemDistribution) switch
         {
-            ItemType.Terminal => $@"""{_utilities.RandomLowerCaseString(_state.ItemLength)}""",
+            ItemType.Terminal => _utilities.RandomLowerCaseString(_state.ItemLength),
             ItemType.NonTerminals => _utilities.RandomNonTerminal(_state.NonTerminals),
             _ => throw new ArgumentOutOfRangeException()
         };
