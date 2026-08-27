@@ -13,7 +13,8 @@ failed=0
 mkdir -p "$results_dir"
 
 echo "=== Generating CFG with $non_terminals nonterminals ==="
-dotnet run --project App/App.csproj -- "$non_terminals" "$@" > "$grammar_file"
+dotnet build App/App.csproj >&2
+dotnet run --no-build --project App/App.csproj -- "$non_terminals" "$@" > "$grammar_file"
 echo "Generated $grammar_file"
 echo
 
