@@ -2,16 +2,20 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-start=${START_NON_TERMINALS:-50}
+start=${START_NON_TERMINALS:-20}
 stop=${STOP_NON_TERMINALS:-200}
-step=${STEP_NON_TERMINALS:-50}
+step=${STEP_NON_TERMINALS:-20}
 out=${BENCHMARK_OUT:-results/cfg.out}
+timeout_seconds=${TIMEOUT_SECONDS:-3600}
+jobs=${JOBS:-1}
 failed=0
 
 echo "=== Random CFG benchmark ==="
-python3 main.py clean --programs
-python3 main.py generate --start "$start" --stop "$stop" --step "$step" "$@"
-python3 main.py run
+python3 main.py generate --start "$start" --stop "$stop" --step "$step" \
+  --timeout "$timeout_seconds" "$@"
+if ! python3 main.py run --timeout "$timeout_seconds" --jobs "$jobs"; then
+  failed=1
+fi
 
 mkdir -p "$(dirname "$out")"
 echo "# Random CFG benchmark" > "$out"

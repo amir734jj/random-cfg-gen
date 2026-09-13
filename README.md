@@ -1,7 +1,8 @@
 # random-cfg-gen
 
 Generate random context-free grammars and benchmark FIRST, FOLLOW, and NULLABLE
-across the DYNAMIC, STATIC, and SYNTH APS evaluators.
+across the DYNAMIC, STATIC, optimized SYNTH, and FARROW APS
+evaluators.
 
 ```bash
 python3 main.py clean --programs
@@ -17,11 +18,31 @@ Run the complete benchmark:
 ./run-benchmarks.sh
 ```
 
+The script preserves existing grammars and results. It generates missing grammar
+sizes and runs only missing or stale evaluator results. Use
+`python3 main.py clean --programs` first only when a full reset is intended.
+
 Override the default range with environment variables:
 
 ```bash
 START_NON_TERMINALS=100 STOP_NON_TERMINALS=1000 STEP_NON_TERMINALS=50 \
 	./run-benchmarks.sh
+```
+
+Each build, generation, or evaluator step has a one-hour timeout. Override it
+with `TIMEOUT_SECONDS`, in seconds:
+
+```bash
+TIMEOUT_SECONDS=1800 ./run-benchmarks.sh
+```
+
+The wrapper uses one job by default so grammar sizes run in order. When one size
+times out, larger sizes are skipped only for that evaluator and analysis; the
+other analyses and evaluators continue. Parallel execution can be enabled when
+strict size ordering is unnecessary:
+
+```bash
+JOBS=4 ./run-benchmarks.sh
 ```
 
 Generator options:
@@ -35,18 +56,29 @@ Limit parallel evaluator runs or select evaluators:
 
 ```bash
 python3 main.py run -j 2
-python3 main.py run -e DYNAMIC SYNTH --force
+python3 main.py run -e SYNTH FARROW
+python3 main.py run -e DYNAMIC SYNTH --force  # explicitly rerun completed results
+python3 main.py run --timeout 1800             # 30-minute limit per step
 ```
+
+Each evaluator runs `FirstDriver`, `FollowDriver`, and `NullableDriver`. Their
+individual output and timing files are stored alongside the combined result.
+Normal runs only schedule grammar/analysis pairs whose result files are missing
+or whose stored grammar hash is stale. A result is complete only when its status
+file contains `OK`; failed and timed-out steps do not publish timing or hash
+files. A failure or timeout stops larger sizes only for the current evaluator
+and analysis. Evaluators with no pending results do not invoke Make.
 
 Generated files are stored under `results/`:
 
 ```text
 results/
 	cfg/
-	dynamic/
-	static/
-	synth/
-	diffs/
+	dynamic/{first,follow,nullable}/
+	static/{first,follow,nullable}/
+	synth/{first,follow,nullable}/
+	farrow/{first,follow,nullable}/
+	diffs/{first,follow,nullable}/
 	summary.csv
 ```
 
