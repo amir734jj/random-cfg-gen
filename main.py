@@ -21,6 +21,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 APS_DIR = ROOT_DIR / ".." / "aps" / "examples" / "scala"
 RESULTS_DIR = ROOT_DIR / "results"
 EVALUATORS = ("DYNAMIC", "STATIC", "SYNTH", "FARROW")
+MAKE_EVALUATORS = {"SYNTH": "SYNTH_EAGER"}
 DEFAULT_TIMEOUT_SECONDS = 60 * 60
 DRIVERS = (
     ("first", "FIRST", "FirstDriver"),
@@ -40,6 +41,10 @@ def cfg_size(cfg_file):
 
 def file_hash(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def make_evaluator(evaluator):
+    return MAKE_EVALUATORS.get(evaluator, evaluator)
 
 
 def evaluator_dir(results_dir, evaluator):
@@ -256,7 +261,8 @@ class RunCommand(Command):
             output_dir / f"{size}.status",
         )
         return (all(path.is_file() for path in required_files)
-                and required_files[-2].read_text().strip() == file_hash(cfg_file)
+                and required_files[-2].read_text().strip()
+                == file_hash(cfg_file)
                 and required_files[-1].read_text().strip() == "OK")
 
     @staticmethod
@@ -270,6 +276,7 @@ class RunCommand(Command):
         hash_file = output_dir / f"{size}.hash"
         status_file = output_dir / f"{size}.status"
         current_hash = file_hash(cfg_file)
+        build_evaluator = make_evaluator(evaluator)
 
         if not force and RunCommand.is_complete(
             cfg_file, evaluator, analysis, results_dir):
@@ -284,7 +291,7 @@ class RunCommand(Command):
         start = time.monotonic()
         with output_file.open("w") as output:
             process = subprocess.Popen(
-                ["make", "--no-print-directory", f"EVALUATOR={evaluator}",
+                ["make", "--no-print-directory", f"EVALUATOR={build_evaluator}",
                  f"ARGS={cfg_file.resolve()}", f"{driver}.run"],
                 cwd=aps_dir, stdout=output, stderr=subprocess.STDOUT,
                 start_new_session=True,
@@ -353,6 +360,7 @@ class RunCommand(Command):
         failed = False
         with BuildLock(aps_dir):
             for evaluator in evaluators:
+                build_evaluator = make_evaluator(evaluator)
                 pending_by_analysis = {
                     analysis: [
                         cfg_file for cfg_file in grammars
@@ -361,7 +369,7 @@ class RunCommand(Command):
                     ]
                     for analysis, _, _ in DRIVERS
                 }
-                print(f"=== Running with EVALUATOR={evaluator} ===")
+                print(f"=== Running with EVALUATOR={build_evaluator} ===")
                 if not any(pending_by_analysis.values()):
                     print("  All results already exist, skipping\n")
                     continue
@@ -372,7 +380,8 @@ class RunCommand(Command):
                 ]
                 try:
                     run_command(
-                        ["make", "--no-print-directory", f"EVALUATOR={evaluator}",
+                        ["make", "--no-print-directory",
+                         f"EVALUATOR={build_evaluator}",
                          *(f"{driver}.class" for driver in pending_drivers)],
                         aps_dir, args.timeout, f"building {evaluator} drivers",
                     )

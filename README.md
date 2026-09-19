@@ -1,7 +1,7 @@
 # random-cfg-gen
 
 Generate random context-free grammars and benchmark FIRST, FOLLOW, and NULLABLE
-across the DYNAMIC, STATIC, optimized SYNTH, and FARROW APS
+across the DYNAMIC, STATIC, eager optimized SYNTH, and FARROW APS
 evaluators.
 
 ```bash
@@ -77,6 +77,7 @@ python3 main.py run --timeout 1800             # 30-minute limit per step
 
 Each evaluator runs `FirstDriver`, `FollowDriver`, and `NullableDriver`. Their
 individual output and timing files are stored alongside the combined result.
+The `SYNTH` benchmark label invokes APS with `EVALUATOR=SYNTH_EAGER`.
 Normal runs only schedule grammar/analysis pairs whose result files are missing
 or whose stored grammar hash is stale. A result is complete only when its status
 file contains `OK`; failed and timed-out steps do not publish timing or hash
