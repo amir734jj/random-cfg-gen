@@ -19,7 +19,11 @@ public class ProductionGenerator
     
     public List<string> Invoke(string nt)
     {
-        return Enumerable.Range(0, !_options.DisallowAlternative ? _randomGen.Rand(_state.productionsDistribution) : 1)
+        var count = _options.DisallowAlternative
+            ? 1
+            : 1 + _randomGen.RandomCount(_options.AlternativeContinuationPercent);
+
+        return Enumerable.Range(0, count)
             .Select(x => _rhsGenerator.Invoke(nt))
             .ToList();
     }

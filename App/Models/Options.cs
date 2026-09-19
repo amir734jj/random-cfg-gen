@@ -15,4 +15,16 @@ public class Options
     
     [Option("DisallowAlternative", Required = false, HelpText = "whether to disallow alternative form of the production", Default = false)]
     public bool DisallowAlternative { get; set; }
+
+    [Option("rhs-continue-percent", Required = false, HelpText = "chance to add another symbol to a right-hand side", Default = 60)]
+    public int RhsContinuationPercent { get; set; }
+
+    [Option("alternative-continue-percent", Required = false, HelpText = "chance to add another alternative to a production", Default = 60)]
+    public int AlternativeContinuationPercent { get; set; }
+
+    [Option("epsilon-percent", Required = false, HelpText = "chance that an eligible alternative is epsilon", Default = 10)]
+    public int EpsilonPercent { get; set; }
+
+    [Option("seed", Required = false, HelpText = "random seed for reproducible generation")]
+    public int? Seed { get; set; }
 }

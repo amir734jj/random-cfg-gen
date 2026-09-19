@@ -19,22 +19,6 @@ public class State
         { ItemType.NonTerminals, 2 },
     };
     
-    public IDictionary<int, double> rhsDistribution = new Dictionary<int, double>
-    {
-        { 0, 4 },
-        { 10, 3 },
-        { 15, 2 },
-        { 20, 1 }
-    };
-    
-    public IDictionary<int, double> productionsDistribution = new Dictionary<int, double>
-    {
-        { 2, 5 },
-        { 4, 3 },
-        { 8, 2 },
-        { 16, 1 },
-    };
-
     public State(Utilities utilities)
     {
         _utilities = utilities;

@@ -157,6 +157,14 @@ class GenerateCommand(Command):
                             help="Characters per terminal or nonterminal")
         parser.add_argument("--disallow-epsilon", action="store_true")
         parser.add_argument("--disallow-alternative", action="store_true")
+        parser.add_argument("--rhs-continue-percent", type=int, default=60,
+                    help="Chance to add another RHS symbol (default: 60)")
+        parser.add_argument("--alternative-continue-percent", type=int, default=60,
+                    help="Chance to add another alternative (default: 60)")
+        parser.add_argument("--epsilon-percent", type=int, default=10,
+                    help="Chance an eligible alternative is epsilon (default: 10)")
+        parser.add_argument("--seed", type=int,
+                    help="Random seed (the grammar size is added per file)")
         parser.add_argument("--results-dir", type=Path, default=RESULTS_DIR)
         parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT_SECONDS,
                     help="Maximum seconds per build/generation step (default: 3600)")
@@ -166,6 +174,13 @@ class GenerateCommand(Command):
             raise ValueError("require --step > 0 and --start <= --stop")
         if args.timeout <= 0:
             raise ValueError("--timeout must be greater than zero")
+        if not 0 <= args.rhs_continue_percent <= 99:
+            raise ValueError("--rhs-continue-percent must be between 0 and 99")
+        if not 0 <= args.alternative_continue_percent <= 99:
+            raise ValueError(
+                "--alternative-continue-percent must be between 0 and 99")
+        if not 0 <= args.epsilon_percent <= 100:
+            raise ValueError("--epsilon-percent must be between 0 and 100")
 
         results_dir = args.results_dir.resolve()
         cfg_dir = results_dir / "cfg"
@@ -182,6 +197,12 @@ class GenerateCommand(Command):
             generator_args.append("--DisallowEpsilon")
         if args.disallow_alternative:
             generator_args.append("--DisallowAlternative")
+        generator_args.extend([
+            "--rhs-continue-percent", str(args.rhs_continue_percent),
+            "--alternative-continue-percent",
+            str(args.alternative_continue_percent),
+            "--epsilon-percent", str(args.epsilon_percent),
+        ])
 
         for size in range(args.start, args.stop + 1, args.step):
             cfg_file = cfg_dir / f"grammar-{size}.cfg"
@@ -190,10 +211,13 @@ class GenerateCommand(Command):
                 continue
             print(f"  Generating {cfg_file.name} ({size} nonterminals) ...")
             try:
+                size_args = list(generator_args)
+                if args.seed is not None:
+                    size_args.extend(["--seed", str(args.seed + size)])
                 with cfg_file.open("w") as output:
                     run_command(
                         ["dotnet", "run", "--no-build", "--project",
-                         "App/App.csproj", "--", str(size), *generator_args],
+                         "App/App.csproj", "--", str(size), *size_args],
                         ROOT_DIR, args.timeout, f"generating {cfg_file.name}",
                         stdout=output,
                     )
@@ -477,16 +501,22 @@ class TimesCommand(Command):
             raise ValueError("no generated CFG files; run generate first")
 
         compared_evaluators = ("static", "synth", "farrow")
-        headers = ("Analysis", "Nonterminals", *EVALUATORS,
-             "DYN=STATIC", "DYN=SYNTH", "DYN=FARROW", "Overall")
-        widths = (12, 14, *(12 for _ in EVALUATORS), 14, 14, 16, 12)
-        print("".join(f"{value:<{width}}" for value, width in zip(headers, widths)))
-        print("".join(f"{'-' * (width - 2):<{width}}" for width in widths))
+        headers = ("Nonterminals", *EVALUATORS,
+                   "DYN=STATIC", "DYN=SYNTH", "DYN=FARROW", "Overall")
+        widths = (14, *(12 for _ in EVALUATORS), 14, 14, 16, 12)
 
         summary_rows = []
-        for cfg_file in grammars:
-            size = cfg_size(cfg_file)
-            for analysis, _, _ in DRIVERS:
+        for analysis, _, _ in DRIVERS:
+            if summary_rows:
+                print()
+            print(analysis.upper())
+            print("".join(
+                f"{value:<{width}}" for value, width in zip(headers, widths)))
+            print("".join(
+                f"{'-' * (width - 2):<{width}}" for width in widths))
+
+            for cfg_file in grammars:
+                size = cfg_size(cfg_file)
                 times = {}
                 for evaluator in EVALUATORS:
                     time_file = (
@@ -505,7 +535,7 @@ class TimesCommand(Command):
                 overall = ("N/A" if any(match is None for match in matches.values())
                            else "MATCH" if all(matches.values()) else "MISMATCH")
                 values = (
-                    analysis.upper(), str(size),
+                                        str(size),
                     *(f"{times[name]}s" if times[name] != "N/A" else "N/A"
                       for name in (name.lower() for name in EVALUATORS)),
                     *(match_status(matches[name]) for name in compared_evaluators),

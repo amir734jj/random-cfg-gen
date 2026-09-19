@@ -50,7 +50,21 @@ Generator options:
 ```bash
 python3 main.py generate --disallow-epsilon --disallow-alternative
 python3 main.py generate --item-length 8 --force
+python3 main.py generate --seed 854 --force
+python3 main.py generate --rhs-continue-percent 40 \
+	--alternative-continue-percent 60 --epsilon-percent 10 --force
 ```
+
+RHS lengths and alternative counts use geometric distributions. Each successful
+continuation test adds one item; RHSs start at zero when epsilon is allowed, and
+productions always start with one alternative. At the default 60% continuation
+chance, nonempty RHSs and production alternative lists each average 2.5 items.
+Lower `--rhs-continue-percent` to make grammars thinner. Epsilon generation is
+separate and defaults to a 10% chance for each eligible alternative, so nullable
+nonterminals are sparse seeds instead of almost all being direct base cases. A
+nonterminal gets at most one epsilon alternative, preserving useful nullable
+chains without filling a production with duplicate epsilon alternatives. With
+`--seed`, each grammar size gets a distinct but reproducible seed.
 
 Limit parallel evaluator runs or select evaluators:
 
